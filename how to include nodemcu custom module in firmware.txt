@@ -1,0 +1,3 @@
+https://odd-one-out.serek.eu/esp8266-nodemcu-dht22-thingspeak/
+https://odd-one-out.serek.eu/esp8266-nodemcu-dht22-custom-modules-firmware/
+https://odd-one-out.serek.eu/esp8266-development-kit-nodemcu-firmware-update-os-x/
