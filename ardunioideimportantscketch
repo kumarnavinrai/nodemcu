@@ -1,0 +1,237 @@
+#include <ArduinoJson.h>
+#include <ESP8266WiFi.h>
+ 
+const char* ssid = "guli";
+const char* password = "narinder";
+
+//ultrasonic sensor
+// defines pins numbers
+const int trigPin = 5;  //D1
+const int echoPin = 4;  //D2
+
+// defines variables
+long duration;
+int distance;
+
+IPAddress ip(192, 168, 43, 247); // where xx is the desired IP Address
+IPAddress gateway(192, 168, 43, 1); // set gateway to match your network
+IPAddress subnet(255, 255, 255, 0); // set subnet mask to match your
+//IPAddress dns(192, 168, 1, 249);
+//WiFi.config(ip, dns, gateway, subnet); 
+int ledPinTwo = 2; // GPIO2 D4 one
+int ledPinFifteen = 15; // GPIO15 D8 two
+int ledPinThree = 3; // GPIO3 D9 three
+int ledPinFourTeen = 14; // GPIO14 D5 four
+char* sendsrcreading = "no";
+
+WiFiServer server(80);
+ 
+void setup() {
+
+  
+  pinMode(trigPin, OUTPUT); // Sets the trigPin as an Output
+  pinMode(echoPin, INPUT); // Sets the echoPin as an Input
+  
+  Serial.begin(115200);
+  delay(10);
+ 
+  pinMode(ledPinTwo, OUTPUT);
+  pinMode(ledPinFifteen, OUTPUT);
+  pinMode(ledPinThree, OUTPUT);
+  pinMode(ledPinFourTeen, OUTPUT);
+
+
+  //digitalWrite(ledPin, HIGH);
+ 
+  // Connect to WiFi network
+  Serial.println();
+  Serial.println();
+  Serial.print("Connecting to ");
+  Serial.println(ssid);
+  WiFi.config(ip, gateway, subnet);
+  WiFi.begin(ssid, password);
+ 
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("");
+  Serial.println("WiFi connected");
+ 
+  // Start the server
+  server.begin();
+  Serial.println("Server started");
+ 
+  // Print the IP address
+  Serial.print("Use this URL to connect: ");
+  Serial.print("http://");
+  Serial.print(WiFi.localIP());
+  Serial.println("/");
+ 
+}
+ 
+void loop() {
+
+ 
+  // Clears the trigPin
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  
+  // Sets the trigPin on HIGH state for 10 micro seconds
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  
+  // Reads the echoPin, returns the sound wave travel time in microseconds
+  duration = pulseIn(echoPin, HIGH);
+  
+  //Serial.print("Duration: ");
+  //Serial.println(duration);
+  
+  // Calculating the distance
+  distance= duration*0.034/2;
+  // Prints the distance on the Serial Monitor
+  //Serial.print("Distance: ");
+  //Serial.println(distance);
+  delay(2000);
+
+  
+  // Check if a client has connected
+  WiFiClient client = server.available();
+  if (!client) {
+    return;
+  }
+ 
+  // Wait until the client sends some data
+  Serial.println("new client");
+  while(!client.available()){
+    delay(1);
+  }
+ 
+  // Read the first line of the request
+  String request = client.readStringUntil('\r');
+  Serial.println(request);
+  client.flush();
+ 
+  // Match the request
+ 
+  int value = LOW;
+  String res = "{";
+  
+
+  
+  if (request.indexOf("/LED=ONONE") != -1)  {
+    digitalWrite(ledPinTwo, HIGH);
+    value = HIGH;
+    res = res + "s1:off,";
+  }
+  if (request.indexOf("/LED=OFFONE") != -1)  {
+    digitalWrite(ledPinTwo, LOW);
+    value = LOW;
+    res = res + "s1:on,";
+  }
+
+  if (request.indexOf("/LED=ONTWO") != -1)  {
+    digitalWrite(ledPinFifteen, HIGH);
+    value = HIGH;
+    res = res + "s2:off,";
+  }
+  if (request.indexOf("/LED=OFFTWO") != -1)  {
+    digitalWrite(ledPinFifteen, LOW);
+    value = LOW;
+    res = res + "s2:on,";
+  }
+
+  if (request.indexOf("/LED=ONTHREE") != -1)  {
+    digitalWrite(ledPinThree, HIGH);
+    value = HIGH;
+    res = res + "s3:off,";
+  }
+  if (request.indexOf("/LED=OFFTHREE") != -1)  {
+    digitalWrite(ledPinThree, LOW);
+    value = LOW;
+    res = res + "s3:on,";
+  }
+
+    if (request.indexOf("/LED=ONFOUR") != -1)  {
+    digitalWrite(ledPinFourTeen, HIGH);
+    value = HIGH;
+    res = res + "s4:off";
+  }
+  if (request.indexOf("/SRC=ULTRASONIC") != -1)  {
+    sendsrcreading = "yes";
+  }
+
+   res = res + "}";
+
+    client.println("HTTP/1.1 200 OK");
+    client.println("Content-Type: application/json;charset=utf-8");
+    client.println("Access-Control-Allow-Origin: *");
+    client.println("Server: Arduino");
+    client.println("Connnection: close");
+    client.println();
+
+  
+    client.print("{\"0\":{\"TemperaturaInterior\":\"");
+    client.print(22);
+    client.print("\",\"TemperaturaExterior\":\"");
+    client.print(33);
+
+    client.print("\"}}");
+    client.println();
+          
+    //client.println("HTTP/1.1 200 OK");
+    //client.println("Content-Type: application/json");
+    //client.println(res);
+    //client.println(distance);
+    //root.printTo(Serial);
+    //Serial.println(res);
+   // Serial.println(distance);
+/*
+// Set ledPin according to the request
+//digitalWrite(ledPin, value);
+ if (request.indexOf("/SRC=ULTRASONIC") == -1) 
+ {
+          // Return the response
+          client.println("HTTP/1.1 200 OK");
+          client.println("Content-Type: text/html");
+          client.println(""); //  do not forget this one
+          client.println("<!DOCTYPE HTML>");
+          client.println("<html>");
+         
+          client.print("Led pin is now: ");
+         
+          if(value == HIGH) {
+            client.print("On");
+            client.print(res);
+            client.print(distance);
+          
+          } else {
+            client.print("Off");
+            client.print(res);
+            client.print(distance);
+          }
+          client.println("<br><br>");
+          client.println("<a href=\"/LED=ONONE\"\"><button>Turn On </button></a>");
+          client.println("<a href=\"/LED=OFFONE\"\"><button>Turn Off </button></a><br />");  
+          client.println("</html>");
+ } else {
+
+          // Return the response
+          client.println("HTTP/1.1 200 OK");
+          client.println("Content-Type: application/json");
+          client.println(""); //  do not forget this one
+          client.println("{");
+          client.print("distance:");
+          client.print(distance);
+          client.print("}");
+         
+          
+ }*/
+  delay(1);
+  client.stop();
+  Serial.println("Client disonnected");
+  Serial.println("");
+ 
+}
+ 
