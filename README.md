@@ -1,4 +1,5 @@
 # ESP8266 Basics
+##Please use these files when programming ESP12 or ESP8266 some files are self explanatory
 
 # These are Important files required for programming ESP8066
 
