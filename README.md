@@ -1,6 +1,6 @@
 # ESP8266 Basics
 
-# These are Important files required for progtamming ESP8066
+# These are Important files required for programming ESP8066
 
 # CH341SER.EXE Driver of USB for lolin chip
 
